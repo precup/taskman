@@ -1,0 +1,21 @@
+td {
+	text-align: center;
+}
+
+th {
+	text-align: center;
+}
+
+.lefttd {
+	text-align: left;
+}
+
+.bottr {
+	border-bottom: 8px solid;
+	border-color: white;
+}
+
+.toptr {
+	border-top: 8px solid;
+	border-color: white;
+}
