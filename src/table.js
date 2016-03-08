@@ -40,12 +40,12 @@ _table.update = function() {
             _table.dragStartX = i1;
             _table.dragStartY = flat[i1].task.start = flat[i1].task.end = i2;
             _table.dragging = true;
-            _data.update();
             _table.update();
           }).on("mouseover", function () {
             if (_table.dragging && _table.dragStartX == i1) {
               flat[i1].task.start = Math.min(i2, _table.dragStartY);
               flat[i1].task.end = Math.max(i2, _table.dragStartY);
+              _table.update();
             }
           }).on("mouseup", function () {
             if (_table.dragging) {

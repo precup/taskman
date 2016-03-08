@@ -14,21 +14,19 @@ var _data = {
 };
 
 _data.init = function() {
-  _data.load();
+  _data.load(null);
 };
 
-_data.save = function(onSave) {
-  chrome.storage.sync.set({'data': _data.data}, function() {
-    if (onSave !== null) onSave();
-  });
+_data.save = function() {
+  chrome.storage.sync.set({'data': _data.data}, function() {});
 };
 
-_data.load = function(onLoad) {
+_data.load = function() {
   chrome.storage.sync.get(null, function(results) {
-    if (typeof results['data'] === Object) {
+    if (typeof results['data'] === "object") {
       _data.data = results['data'];
       _data.update();    
-      if (onLoad !== null) onLoad();
+      _table.update();
     }
   });
 };
@@ -62,15 +60,19 @@ _data.scheduled = function(day) {
   return Math.floor(_data.data.scheduled[day] * 100);
 };
 
-_data.scheduleDay = function(average, day, workSoFar, cache) {
+var uncached = 0;
+var all = 0;
+_data.scheduleDay = function(average, day, workSoFar, cache, precise) {
   if (day >= _global.days) return {variance: 0};
+  all++;
   if (cache[day][workSoFar] != -1) return cache[day][workSoFar];
   
+  uncached++;
   var available = _data.available(day) - workSoFar + _data.scheduled(day);
   var due = _data.due(day) - workSoFar + _data.scheduled(day);
-  for (var work = Math.min(due, Math.min(available, _global.maxWork)); work <= _global.maxWork && work <= available; work++) {
-    if (day == 0) console.log(work);
-    var variance = _data.scheduleDay(average, day + 1, work + workSoFar, cache).variance + Math.pow(work - average, 2);
+  var inc = precise ? 1 : 10;
+  for (var work = Math.min(due, Math.min(available, _global.maxWork)); work <= _global.maxWork && work <= available; work += inc) {
+    var variance = _data.scheduleDay(average, day + 1, work + workSoFar, cache, precise).variance + Math.pow(work - average, 2);
     if (cache[day][workSoFar] == -1 || cache[day][workSoFar].variance > variance) {
       cache[day][workSoFar] = {
         variance: variance,
@@ -78,12 +80,12 @@ _data.scheduleDay = function(average, day, workSoFar, cache) {
       };
     }
   }
-  if (typeof cache[day][workSoFar] === "undefined") console.log(average + " " + day + " " + workSoFar + " " + available + " " + due);
-  if (cache[day][workSoFar] === -1) console.log(average + " " + day + " " + workSoFar + " " + available + " " + due);
   return cache[day][workSoFar];
 };
 
-_data.schedule = function() {
+_data.schedule = function(precise) {
+  uncached = 0;
+  all = 0;
   var total = _data.due(_global.days - 1) + 1;
   var cache = new Array(_global.days);
   for (var i = 0; i < cache.length; i++) {
@@ -92,10 +94,9 @@ _data.schedule = function() {
       cache[i][k] = -1;
     }
   }
-  var workSoFar = _data.scheduleDay(total / _global.days, 0, 0, cache).work;
+  var workSoFar = _data.scheduleDay(total / _global.days, 0, 0, cache, precise).work;
   _data.data.wpd[0] = workSoFar + _data.scheduled(0);
   for (var i = 1; i < _global.days; i++) {
-    console.log(i + " " + workSoFar);
     _data.data.wpd[i] = cache[i][workSoFar].work + _data.scheduled(i);
     workSoFar += cache[i][workSoFar].work;
   }
@@ -128,7 +129,7 @@ _data.update = function() {
     }
   }
   
-  return _data.schedule();
+  return _data.schedule(false);
 };
 
 _data.add = function(source, task, time) {

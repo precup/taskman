@@ -7,12 +7,10 @@ _global.init = function() {
   d3.select("body").on("keydown", function() {
     switch (d3.event.keyCode) {
       case 76:
-        _data.load(function() {
-          _table.update();
-        });
+        _data.load();
         break;
       case 83:
-        _data.save(function() {});
+        _data.save();
         break;
       default:
         break;
