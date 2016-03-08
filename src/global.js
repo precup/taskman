@@ -1,6 +1,6 @@
 var _global = {
   days: 13,
-  maxWork: 999
+  maxWork: 2400
 };
 
 _global.init = function() {

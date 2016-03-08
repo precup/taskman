@@ -60,19 +60,15 @@ _data.scheduled = function(day) {
   return Math.floor(_data.data.scheduled[day] * 100);
 };
 
-var uncached = 0;
-var all = 0;
 _data.scheduleDay = function(average, day, workSoFar, cache, precise) {
   if (day >= _global.days) return {variance: 0};
-  all++;
   if (cache[day][workSoFar] != -1) return cache[day][workSoFar];
   
-  uncached++;
   var available = _data.available(day) - workSoFar + _data.scheduled(day);
   var due = _data.due(day) - workSoFar + _data.scheduled(day);
-  var inc = precise ? 1 : 10;
+  var inc = precise ? 5 : 25;
   for (var work = Math.min(due, Math.min(available, _global.maxWork)); work <= _global.maxWork && work <= available; work += inc) {
-    var variance = _data.scheduleDay(average, day + 1, work + workSoFar, cache, precise).variance + Math.pow(work - average, 2);
+    var variance = _data.scheduleDay(average, day + 1, work + workSoFar - _data.scheduled(day), cache, precise).variance + Math.pow(work - average, 2);
     if (cache[day][workSoFar] == -1 || cache[day][workSoFar].variance > variance) {
       cache[day][workSoFar] = {
         variance: variance,
@@ -84,8 +80,6 @@ _data.scheduleDay = function(average, day, workSoFar, cache, precise) {
 };
 
 _data.schedule = function(precise) {
-  uncached = 0;
-  all = 0;
   var total = _data.due(_global.days - 1) + 1;
   var cache = new Array(_global.days);
   for (var i = 0; i < cache.length; i++) {
